@@ -1,0 +1,18 @@
+services:
+
+  apache:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src:/var/www/html
+
+  postgres:
+    image: postgres:16
+    env_file:
+      - ./psql/psql.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
