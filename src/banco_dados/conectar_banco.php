@@ -2,22 +2,9 @@
 
 require_once __DIR__ . "/../conf/dados_psql.php";
 
-try 
-{
-    $pdo = new PDO
-    (
-        "pgsql:host=$host;dbname=$dbname",
-        $user,
-        $password
-    );
+$dados_conexao = "host=$host port=$port dbname=$dbname user=$user password=$password";
+$conexao = pg_connect($dados_conexao);
 
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    return $pdo;
-
-} catch(PDOException $e) 
-{
-    die("Erro ao conectar ao banco de dados: " . $e->getMessage());
-}
-
+if(!$conexao)
+    throw new Exception("Não foi possivel conectar ao banco de dados.");
 ?>
