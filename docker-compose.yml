@@ -13,6 +13,7 @@ services:
       - ./psql/psql.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./sql:/sql:ro
 
 volumes:
   postgres_data:

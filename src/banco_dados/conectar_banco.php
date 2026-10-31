@@ -7,4 +7,6 @@ $conexao = pg_connect($dados_conexao);
 
 if(!$conexao)
     throw new Exception("Não foi possivel conectar ao banco de dados.");
+
+return $conexao;
 ?>
