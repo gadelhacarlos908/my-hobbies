@@ -12,8 +12,15 @@ description: Padrões de código PHP do my-hobbies (PHP sem framework com a exte
 
 ## Acesso ao banco
 
-- SQL com valores variáveis usa sempre `pg_query_params`. Nunca concatene valores na query, para evitar SQL Injection.
+- As funções acessam o banco por `banco_dados/funcoes_banco_dados.php`: `selectDB` para leituras e `executarDB` para escritas. Só esse arquivo chama `pg_query_params`.
+- A query fica em uma variável `$query`, com marcadores `$1`, `$2`, e é enviada à função junto com os parâmetros. Listas longas ficam em `$parametros`.
+- Nunca concatene valores na query, para evitar SQL Injection. Nomes de tabela só entram por constantes da página.
 - Toda query de dados do usuário filtra por `usuario_id`, para que uma pessoa nunca veja dados de outra.
+
+## Organização
+
+- Cada categoria tem sua página (`myFun.php`, `myBody.php`, `mySkills.php`), com o CRUD em funções dentro dela: `registros_get`, `registros_cad`, `registros_up`, `registros_del`.
+- O CRUD de hobbies é igual nas três páginas e fica em `includes/hobbies.php`.
 
 ## Saída
 

@@ -33,7 +33,5 @@ description: Padrões de banco de dados do my-hobbies (PostgreSQL 16). Use ao cr
 - Tabelas específicas de uma categoria usam FK composta (`hobby_id`, `categoria`) para `hobbies (id, categoria)`. A coluna `categoria` tem valor fixo, garantido por `DEFAULT` e `CHECK`.
 - O banco é a última barreira. O PHP valida antes, para não gerar erros de banco desnecessários (ver `padroes-php`).
 - FKs para `hobbies` usam `ON DELETE RESTRICT`. O fluxo de exclusão confirmada fica em `padroes-php`.
-- Exceção: `hobby_tags` usa `ON DELETE CASCADE`, porque o vínculo com a tag não é histórico.
 - FKs para `itens_consumo` usam `ON DELETE CASCADE`. Antes de apagar, o PHP avisa quantos registros existem e pede confirmação.
-- Tags existem apenas em hobbies.
 - Valores calculáveis, como streak e nota atual, não viram coluna. São obtidos por query a partir do histórico.

@@ -1,14 +1,15 @@
 <?php
 
-try
-{
-    $conexao = require __DIR__ . "/banco_dados/conectar_banco.php";
+require __DIR__ . "/includes/app.php";
 
-    echo "Conectado ao PostgreSQL com sucesso!";
-} catch (Exception $e)
-{
-    echo "Erro ao conectar ao banco de dados!";
-}
-
+$titulo = "MyHobbies";
+require __DIR__ . "/includes/cabecalho.php";
 
 ?>
+<ul>
+    <li><a href="myFun.php">MyFun</a></li>
+    <li><a href="myBody.php">MyBody</a></li>
+    <li><a href="mySkills.php">MySkills</a></li>
+</ul>
+</body>
+</html>
