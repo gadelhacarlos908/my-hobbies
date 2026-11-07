@@ -1,0 +1,6 @@
+# Credenciais locais. Use .env.example como modelo.
+.env
+
+# Logs de erro: podem conter queries e dados. A pasta fica no repositório, o conteúdo não.
+tmp/*
+!tmp/.gitkeep

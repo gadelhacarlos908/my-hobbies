@@ -7,7 +7,7 @@ description: Padrões de banco de dados do my-hobbies (PostgreSQL 16). Use ao cr
 
 ## Organização
 
-- Todo arquivo SQL fica em `sql/`, na raiz do projeto. Nunca em `src/`, que é a pasta pública do Apache.
+- Todo arquivo SQL fica em `sql/`, na raiz do projeto. Nunca em `public/`, a única pasta acessível pelo navegador.
 - Migrations ficam em `sql/migrations/`, numeradas com quatro dígitos: `0001_descricao.sql`.
 - Uma migration já aplicada não é editada. Mudanças entram em um novo arquivo, para que o histórico do schema seja reproduzível.
 - Migrations são aplicadas com `docker compose exec postgres sh /sql/migrar.sh`. O script registra cada uma em `schema_migrations` e executa apenas as pendentes.

@@ -5,6 +5,7 @@
         Você não prefere alterar os registros em vez de excluir?
     </p>
     <form method="post" action="<?= h($pagina) ?>">
+        <?= csrf_campo() ?>
         <input type="hidden" name="acao" value="hobby_del">
         <input type="hidden" name="hobby_id" value="<?= (int) $confirmar["id"] ?>">
         <input type="hidden" name="confirmado" value="1">
@@ -14,6 +15,7 @@
 <?php endif; ?>
 
 <h2>Hobbies</h2>
+<p><?= h($explicacao) ?></p>
 <table border="1" cellpadding="6">
     <tr><th>Nome</th><th>Descrição</th><th>Situação</th><th>Ações</th></tr>
     <?php foreach($hobbies as $item): ?>
@@ -22,8 +24,10 @@
             <td><?= h($item["descricao"]) ?></td>
             <td><?= $item["ativo"] === "t" ? "Ativo" : "Arquivado" ?></td>
             <td>
+                <a href="<?= h($pagina) ?>?hobby_id=<?= (int) $item["id"] ?>">Abrir</a>
                 <a href="<?= h($pagina) ?>?editar_hobby=<?= (int) $item["id"] ?>">Editar</a>
                 <form method="post" action="<?= h($pagina) ?>" style="display:inline">
+                    <?= csrf_campo() ?>
                     <input type="hidden" name="acao" value="hobby_del">
                     <input type="hidden" name="hobby_id" value="<?= (int) $item["id"] ?>">
                     <button type="submit">Excluir</button>
@@ -35,6 +39,7 @@
 
 <h2><?= $editar_hobby ? "Editar hobby" : "Novo hobby" ?></h2>
 <form method="post" action="<?= h($pagina) ?>">
+    <?= csrf_campo() ?>
     <input type="hidden" name="acao" value="<?= $editar_hobby ? "hobby_up" : "hobby_cad" ?>">
     <input type="hidden" name="hobby_id" value="<?= (int) ($editar_hobby["id"] ?? 0) ?>">
     <p><label>Nome <input type="text" name="nome" required value="<?= h($editar_hobby["nome"] ?? "") ?>"></label></p>

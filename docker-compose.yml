@@ -4,13 +4,24 @@ services:
     build: .
     ports:
       - "8080:80"
+    env_file:
+      - ./.env
     volumes:
-      - ./src:/var/www/html
+      - ./public:/var/www/html/public
+      - ./src:/var/www/html/src
+      - ./config:/var/www/html/config
+      - ./tmp:/var/www/html/tmp
+
+  # Servidor de e-mail local: recebe as mensagens e mostra em http://localhost:8025.
+  mailpit:
+    image: axllent/mailpit:v1.21.8
+    ports:
+      - "8025:8025"
 
   postgres:
     image: postgres:16
     env_file:
-      - ./psql/psql.env
+      - ./.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./sql:/sql:ro
