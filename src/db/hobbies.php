@@ -1,13 +1,27 @@
 <?php
 
-function hobbies_get($usuario_id, $categoria)
+// $filtro: situacao (ativo ou arquivado), ordem (nome ou situacao) e dir.
+function hobbies_get($usuario_id, $categoria, $filtro)
 {
+    $parametros = [$usuario_id, $categoria];
+    $where = "";
+
+    if(in_array($filtro["situacao"] ?? "", ["ativo", "arquivado"], true))
+        sql_filtro($where, $parametros, "ativo = ({v} = 'ativo')", $filtro["situacao"]);
+
+    $ordem = match($filtro["ordem"] ?? "")
+    {
+        "nome" => "nome",
+        "situacao" => "NOT ativo",
+        default => null,
+    };
+
     $query = "SELECT id, nome, descricao, ativo
               FROM hobbies
-              WHERE usuario_id = $1 AND categoria = $2
-              ORDER BY ativo DESC, nome";
+              WHERE usuario_id = $1 AND categoria = $2$where
+              ORDER BY " . sql_ordem($ordem, $filtro, "ativo DESC, nome");
 
-    return selectDB($query, [$usuario_id, $categoria]);
+    return selectDB($query, $parametros);
 }
 
 function hobby_get($usuario_id, $categoria, $hobby_id)

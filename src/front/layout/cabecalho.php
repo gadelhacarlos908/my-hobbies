@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title><?= h($titulo) ?> | MyHobbies</title>
+    <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
     <?php if(usuario_logado()): ?>

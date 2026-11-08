@@ -1,0 +1,40 @@
+/* Estilos básicos. O visual completo do site entra depois. */
+
+/* Barra acima das listas com os botões Filtrar e + Novo, que abrem os formulários. */
+.barra-acoes {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+    margin: 8px 0;
+}
+
+.barra-acoes summary {
+    display: inline-block;
+    list-style: none;
+    cursor: pointer;
+    padding: 4px 12px;
+    border: 1px solid #888;
+    border-radius: 4px;
+    background: #f2f2f2;
+}
+
+/* Esconde a setinha padrão do <summary> no Chrome e no Safari. */
+.barra-acoes summary::-webkit-details-marker {
+    display: none;
+}
+
+/* O formulário aberto aparece abaixo da barra, como um menu, e os botões continuam juntos. */
+.barra-acoes details[open] > form {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 10;
+    margin-top: 4px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}

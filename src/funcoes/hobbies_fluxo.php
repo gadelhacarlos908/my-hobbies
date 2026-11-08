@@ -51,12 +51,17 @@ function hobbies_processar($usuario_id, $categoria, $tabela, $pagina)
 }
 
 // Dados da tela de lista de hobbies, usados quando nenhum hobby está aberto.
-function hobbies_tela_dados($usuario_id, $categoria, $pagina, $explicacao)
+function hobbies_tela_dados($usuario_id, $categoria, $pagina, $menu, $explicacao)
 {
+    $filtro = filtros_processar($menu, "hobbies", $pagina);
+
     return [
         "pagina" => $pagina,
         "explicacao" => $explicacao,
-        "hobbies" => hobbies_get($usuario_id, $categoria),
+        "lista_url" => $pagina,
+        "menu" => $menu,
+        "filtro" => $filtro,
+        "hobbies" => hobbies_get($usuario_id, $categoria, $filtro),
         "editar_hobby" => isset($_GET["editar_hobby"])
             ? hobby_get($usuario_id, $categoria, (int) $_GET["editar_hobby"])
             : null,

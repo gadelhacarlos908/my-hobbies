@@ -36,7 +36,8 @@ function registros_dados_post($secao)
     ];
 }
 
-function registros_validar($secao, $dados)
+// A situação só é escolhida no cadastro. Depois, muda pelo Atualizar.
+function registros_validar($secao, $dados, $acao)
 {
     if($dados["titulo"] === "")
         return "Informe o título.";
@@ -44,7 +45,7 @@ function registros_validar($secao, $dados)
     if(!isset($secao["tipos"][$dados["tipo"]]))
         return "Escolha um tipo válido.";
 
-    if(!isset(STATUS[$dados["status"]]))
+    if($acao === "registro_cad" && !isset(STATUS[$dados["status"]]))
         return "Escolha uma situação válida.";
 
     if($dados["data_inicio"] !== null && !data_valida($dados["data_inicio"]))
@@ -124,7 +125,7 @@ if($acao === "registro_cad" || ($hobby_id && $acao === "registro_up"))
 {
     $dados = registros_dados_post($secao);
     $avaliacao = avaliacoes_dados_post();
-    $erro = registros_validar($secao, $dados);
+    $erro = registros_validar($secao, $dados, $acao);
 
     if(!$erro && $acao === "registro_cad" && !avaliacoes_vazia($avaliacao))
         $erro = avaliacoes_validar($avaliacao);
@@ -148,20 +149,33 @@ if($acao === "registro_cad" || ($hobby_id && $acao === "registro_up"))
     }
 }
 
-if($hobby_id && $acao === "avaliacao_cad")
+// Atualizar: nova situação e, opcionalmente, uma linha no histórico (nota, review, conclusão).
+if($hobby_id && $acao === "registro_atualizar")
 {
     $item_id = (int) ($_POST["item_id"] ?? 0);
-    $dados = avaliacoes_dados_post();
-    $erro = avaliacoes_validar($dados);
+    $status_atual = registros_status_get($usuario_id, $hobby_id, $item_id);
+    $status = $_POST["status"] ?? "";
+    $avaliacao = avaliacoes_dados_post();
+
+    if($status_atual === null)
+        redirecionar($voltar);
+
+    if(!isset(STATUS[$status]))
+        $erro = "Escolha uma situação válida.";
+    elseif(avaliacoes_vazia($avaliacao) && $status === $status_atual)
+        $erro = "Mude a situação ou informe a nota, o review ou a data de conclusão.";
+    elseif(!avaliacoes_vazia($avaliacao))
+        $erro = avaliacoes_validar($avaliacao);
 
     if(!$erro)
     {
-        avaliacoes_cad($usuario_id, $item_id, $dados);
+        registros_atualizar($usuario_id, $hobby_id, $item_id, $status, avaliacoes_vazia($avaliacao) ? null : $avaliacao);
         redirecionar("$voltar&ver=$item_id");
     }
 }
 
-$registros = $hobby_id ? registros_get($usuario_id, $hobby_id) : [];
+$filtro = filtros_processar("my_fun", $chave, $voltar);
+$registros = $hobby_id ? registros_get($usuario_id, $hobby_id, $filtro) : [];
 $editar = null;
 $ver = null;
 $ver_id = (int) ($_GET["ver"] ?? $_POST["item_id"] ?? 0);
@@ -182,10 +196,14 @@ exibir(["myFun/itens"], [
     "status" => STATUS,
     "registros" => $registros,
     "editar" => $editar,
+    "form_aberto" => $editar || ($erro && in_array($acao, ["registro_cad", "registro_up"], true)),
     "ver" => $ver,
     "historico" => $ver ? avaliacoes_get($usuario_id, (int) $ver["id"]) : [],
     "voltar" => $voltar,
     "confirmar_item" => $confirmar_item,
+    "lista_url" => $voltar,
+    "menu" => "my_fun",
+    "filtro" => $filtro,
 ]);
 
 ?>

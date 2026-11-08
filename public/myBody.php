@@ -3,7 +3,7 @@
 require __DIR__ . "/../src/includes/app.php";
 
 $usuario_id = exigir_login();
-require __DIR__ . "/../src/includes/hobbies_fluxo.php";
+require __DIR__ . "/../src/funcoes/hobbies_fluxo.php";
 require __DIR__ . "/../src/db/myBody.php";
 
 const CATEGORIA = "atividade_fisica";
@@ -72,16 +72,18 @@ if($hobby && ($acao === "registro_cad" || $acao === "registro_up"))
 if(!$hobby)
 {
     $explicacao = "Um hobby agrupa seus treinos. Crie um hobby, como Musculação ou Corrida, e abra-o para cadastrar os treinos.";
-    $dados_tela = hobbies_tela_dados($usuario_id, CATEGORIA, PAGINA, $explicacao);
+    $dados_tela = hobbies_tela_dados($usuario_id, CATEGORIA, PAGINA, "my_body", $explicacao);
 
     exibir(["hobbies/lista"], $dados_tela + [
         "titulo" => "MyBody",
         "erro" => $erro,
         "confirmar" => $resposta["confirmar"],
+        "form_aberto" => $dados_tela["editar_hobby"] || $erro,
     ]);
 }
 
-$registros = registros_get($usuario_id, $hobby_id);
+$filtro = filtros_processar("my_body", $hobby_id, $voltar);
+$registros = registros_get($usuario_id, $hobby_id, $filtro);
 $editar = null;
 
 foreach($registros as $registro)
@@ -93,8 +95,12 @@ exibir(["myBody/registros"], [
     "erro" => $erro,
     "registros" => $registros,
     "editar" => $editar,
+    "form_aberto" => $editar || ($erro && in_array($acao, ["registro_cad", "registro_up"], true)),
     "voltar" => $voltar,
     "intensidades" => INTENSIDADES,
+    "lista_url" => $voltar,
+    "menu" => "my_body",
+    "filtro" => $filtro,
 ]);
 
 ?>

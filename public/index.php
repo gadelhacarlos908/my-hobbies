@@ -1,7 +1,7 @@
 <?php
 
 require __DIR__ . "/../src/includes/app.php";
-require __DIR__ . "/../src/includes/email.php";
+require __DIR__ . "/../src/funcoes/email.php";
 require __DIR__ . "/../src/db/usuarios.php";
 
 const PAGINA = "index.php";

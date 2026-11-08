@@ -1,14 +1,34 @@
 <?php
 
-function registros_get($usuario_id, $hobby_id)
+// $filtro: data_de, data_ate, texto (o que praticou ou observações), ordem e dir.
+function registros_get($usuario_id, $hobby_id, $filtro)
 {
+    $parametros = [$hobby_id, $usuario_id];
+    $where = "";
+
+    if(data_valida($filtro["data_de"] ?? ""))
+        sql_filtro($where, $parametros, "s.data >= {v}::date", $filtro["data_de"]);
+
+    if(data_valida($filtro["data_ate"] ?? ""))
+        sql_filtro($where, $parametros, "s.data <= {v}::date", $filtro["data_ate"]);
+
+    if(isset($filtro["texto"]))
+        sql_filtro($where, $parametros, "(s.descricao_conteudo ILIKE {v} OR s.observacoes ILIKE {v})", sql_contem($filtro["texto"]));
+
+    $ordem = match($filtro["ordem"] ?? "")
+    {
+        "data" => "s.data",
+        "duracao" => "s.duracao_minutos",
+        default => null,
+    };
+
     $query = "SELECT s.id, s.data, s.duracao_minutos, s.descricao_conteudo, s.observacoes
               FROM sessoes_pratica s
               JOIN hobbies h ON h.id = s.hobby_id
-              WHERE s.hobby_id = $1 AND h.usuario_id = $2
-              ORDER BY s.data DESC, s.id DESC";
+              WHERE s.hobby_id = $1 AND h.usuario_id = $2$where
+              ORDER BY " . sql_ordem($ordem, $filtro, "s.data DESC, s.id DESC");
 
-    return selectDB($query, [$hobby_id, $usuario_id]);
+    return selectDB($query, $parametros);
 }
 
 // O INSERT ... SELECT só grava se o hobby for do usuário e da categoria certa.

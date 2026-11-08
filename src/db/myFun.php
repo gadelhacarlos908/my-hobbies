@@ -28,20 +28,49 @@ function secao_hobby_id($usuario_id, $nome, $criar)
     return $hobby ? (int) $hobby[0]["id"] : null;
 }
 
-function registros_get($usuario_id, $hobby_id)
+// $filtro: titulo (contém), situacao, tipo, nota_min, ordem e dir.
+// O LATERAL busca a última nota de cada item uma vez, e "n.nota" pode ser usada no filtro e na ordem.
+function registros_get($usuario_id, $hobby_id, $filtro)
 {
-    $query = "SELECT i.id, i.titulo, i.tipo, i.status, i.data_inicio,
-                     (SELECT a.nota
-                      FROM avaliacoes_item a
-                      WHERE a.item_id = i.id AND a.nota IS NOT NULL
-                      ORDER BY a.criado_em DESC, a.id DESC
-                      LIMIT 1) AS nota
+    $parametros = [$hobby_id, $usuario_id];
+    $where = "";
+
+    if(isset($filtro["titulo"]))
+        sql_filtro($where, $parametros, "i.titulo ILIKE {v}", sql_contem($filtro["titulo"]));
+
+    if(isset($filtro["situacao"]))
+        sql_filtro($where, $parametros, "i.status = {v}", $filtro["situacao"]);
+
+    if(isset($filtro["tipo"]))
+        sql_filtro($where, $parametros, "i.tipo = {v}", $filtro["tipo"]);
+
+    if(is_numeric($filtro["nota_min"] ?? ""))
+        sql_filtro($where, $parametros, "n.nota >= {v}::numeric", $filtro["nota_min"]);
+
+    $ordem = match($filtro["ordem"] ?? "")
+    {
+        "titulo" => "i.titulo",
+        "tipo" => "i.tipo",
+        "situacao" => "CASE i.status WHEN 'quero' THEN 1 WHEN 'em_andamento' THEN 2 WHEN 'concluido' THEN 3 WHEN 'abandonado' THEN 4 END",
+        "inicio" => "i.data_inicio",
+        "nota" => "n.nota",
+        default => null,
+    };
+
+    $query = "SELECT i.id, i.titulo, i.tipo, i.status, i.data_inicio, n.nota
               FROM itens_consumo i
               JOIN hobbies h ON h.id = i.hobby_id
-              WHERE i.hobby_id = $1 AND h.usuario_id = $2
-              ORDER BY i.titulo, i.id";
+              LEFT JOIN LATERAL (
+                  SELECT a.nota
+                  FROM avaliacoes_item a
+                  WHERE a.item_id = i.id AND a.nota IS NOT NULL
+                  ORDER BY a.criado_em DESC, a.id DESC
+                  LIMIT 1
+              ) n ON true
+              WHERE i.hobby_id = $1 AND h.usuario_id = $2$where
+              ORDER BY " . sql_ordem($ordem, $filtro, "i.titulo, i.id");
 
-    return selectDB($query, [$hobby_id, $usuario_id]);
+    return selectDB($query, $parametros);
 }
 
 // O INSERT ... SELECT só grava se o hobby for do usuário e da categoria certa.
@@ -74,17 +103,55 @@ function registros_cad($usuario_id, $hobby_id, $dados, $avaliacao)
     }
 }
 
+function registros_status_get($usuario_id, $hobby_id, $registro_id)
+{
+    $query = "SELECT i.status
+              FROM itens_consumo i
+              JOIN hobbies h ON h.id = i.hobby_id
+              WHERE i.id = $1 AND i.hobby_id = $2 AND h.usuario_id = $3";
+
+    $item = selectDB($query, [$registro_id, $hobby_id, $usuario_id]);
+
+    return $item[0]["status"] ?? null;
+}
+
+// Editar corrige os dados do item. A situação muda só pelo Atualizar (registros_atualizar).
 function registros_up($usuario_id, $hobby_id, $registro_id, $dados)
 {
     $query = "UPDATE itens_consumo i
-              SET titulo = $1, tipo = $2, status = $3, data_inicio = $4
+              SET titulo = $1, tipo = $2, data_inicio = $3
               FROM hobbies h
-              WHERE i.id = $5 AND i.hobby_id = $6 AND h.id = i.hobby_id AND h.usuario_id = $7";
+              WHERE i.id = $4 AND i.hobby_id = $5 AND h.id = i.hobby_id AND h.usuario_id = $6";
 
-    $parametros = [$dados["titulo"], $dados["tipo"], $dados["status"], $dados["data_inicio"],
-        $registro_id, $hobby_id, $usuario_id];
+    $parametros = [$dados["titulo"], $dados["tipo"], $dados["data_inicio"], $registro_id, $hobby_id, $usuario_id];
 
     executarDB($query, $parametros);
+}
+
+// Atualizar: muda a situação e, se houver nota, review ou conclusão ($avaliacao), soma uma linha
+// ao histórico. As duas gravações entram juntas.
+function registros_atualizar($usuario_id, $hobby_id, $registro_id, $status, $avaliacao)
+{
+    $query = "UPDATE itens_consumo i
+              SET status = $1
+              FROM hobbies h
+              WHERE i.id = $2 AND i.hobby_id = $3 AND h.id = i.hobby_id AND h.usuario_id = $4";
+
+    executarDB("BEGIN");
+
+    try
+    {
+        executarDB($query, [$status, $registro_id, $hobby_id, $usuario_id]);
+
+        if($avaliacao)
+            avaliacoes_cad($usuario_id, $registro_id, $avaliacao);
+
+        executarDB("COMMIT");
+    } catch (Exception $e)
+    {
+        executarDB("ROLLBACK");
+        throw $e;
+    }
 }
 
 // O CASCADE do banco apaga junto as avaliações e as sessões do item.

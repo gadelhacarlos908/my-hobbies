@@ -1,15 +1,39 @@
 <?php
 
-function registros_get($usuario_id, $hobby_id)
+// $filtro: data_de, data_ate, intensidade, texto (métricas ou observações), ordem e dir.
+function registros_get($usuario_id, $hobby_id, $filtro)
 {
+    $parametros = [$hobby_id, $usuario_id];
+    $where = "";
+
+    if(data_valida($filtro["data_de"] ?? ""))
+        sql_filtro($where, $parametros, "r.data >= {v}::date", $filtro["data_de"]);
+
+    if(data_valida($filtro["data_ate"] ?? ""))
+        sql_filtro($where, $parametros, "r.data <= {v}::date", $filtro["data_ate"]);
+
+    if(in_array($filtro["intensidade"] ?? "", ["baixa", "moderada", "alta"], true))
+        sql_filtro($where, $parametros, "r.intensidade = {v}", $filtro["intensidade"]);
+
+    if(isset($filtro["texto"]))
+        sql_filtro($where, $parametros, "(r.metricas->>'texto' ILIKE {v} OR r.observacoes ILIKE {v})", sql_contem($filtro["texto"]));
+
+    $ordem = match($filtro["ordem"] ?? "")
+    {
+        "data" => "r.data",
+        "duracao" => "r.duracao_minutos",
+        "intensidade" => "CASE r.intensidade WHEN 'baixa' THEN 1 WHEN 'moderada' THEN 2 WHEN 'alta' THEN 3 END",
+        default => null,
+    };
+
     $query = "SELECT r.id, r.data, r.duracao_minutos, r.intensidade, r.observacoes,
                      r.metricas->>'texto' AS metricas
               FROM registros_atividade r
               JOIN hobbies h ON h.id = r.hobby_id
-              WHERE r.hobby_id = $1 AND h.usuario_id = $2
-              ORDER BY r.data DESC, r.id DESC";
+              WHERE r.hobby_id = $1 AND h.usuario_id = $2$where
+              ORDER BY " . sql_ordem($ordem, $filtro, "r.data DESC, r.id DESC");
 
-    return selectDB($query, [$hobby_id, $usuario_id]);
+    return selectDB($query, $parametros);
 }
 
 // O INSERT ... SELECT só grava se o hobby for do usuário e da categoria certa.
